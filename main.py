@@ -67,6 +67,87 @@ def update_name(id, new_name):
     conn.commit() 
     conn.close()
 
+# A search function for names using LIKE operator for partial match
+def search_names(keyword):
+	conn = sqlite3.connect("names.db")
+	cursor = conn.cursor()
+	cursor.execute("SELECT id, name FROM people WHERE name LIKE ?", (f"%{keyword}%",))
+	results = cursor.fetchall()
+	conn.close()
+	return results
+# Gives title for searching	
+st.title("Search Names")
+
+# Search query results
+query = st.text_input("Search:")
+
+if query:
+	results = search_names(query) 
+	for r in results: 
+		st.write(f"{r[0]}. {r[1]}")
+
+# Function for sorting names alphabetically
+def get_sorted_names(): 
+    conn = sqlite3.connect("names.db") 
+    cursor = conn.cursor() 
+    cursor.execute("SELECT id, name FROM people ORDER BY name ASC") 
+    sorted_rows = cursor.fetchall() 
+    conn.close() 
+    return sorted_rows
+# Title for sorted names	
+st.title("Sorted Name List")
+# Displaying sorted name in a row
+names = get_sorted_names()
+for row in names: 
+    st.write(f"{row[0]}. {row[1]}")
+
+# Sorted name count feature
+st.title("Name Count Feature")
+
+def get_name_count():
+	conn = sqlite3.connect("names.db")
+	cursor = conn.cursor()
+	cursor.execute("SELECT COUNT(*) FROM people")
+	count = cursor.fetchone()[0]
+	conn.close()
+	return count
+	
+# Function that groups names by letter
+def get_name_count_by_letter():
+	conn = sqlite3.connect("names.db")
+	cursor = conn.cursor()
+	cursor.execute("""
+    SELECT UPPER(SUBSTR(name, 1, 1)) AS first_letter,
+    COUNT(*) FROM people
+    GROUP BY first_letter
+    ORDER BY first_letter""")
+	results = cursor.fetchall()
+	conn.close()
+	return results
+
+# getting the total count
+total = get_name_count()
+st.subheader(f"Total number of names: {total}")
+
+st.subheader("Name count by first letter:")
+grouped = get_name_count_by_letter()
+for letter, count in grouped: 
+	st.write(f"{letter}: {count} name(s)")
+
+# Function to Delete ALL data from database. DANGER-Use with caution
+def delete_all_names():
+	conn = sqlite3.connect("names.db")
+	cursor = conn.cursor()
+	cursor.execute("DELETE FROM people")
+	conn.commit()
+	conn.close()
+
+st.title("Danger Zone: Delete ALL Names")
+#button for deleting all:
+if st.button("Delete ALL"):
+	delete_all_names()
+	st.warning("All names have been deleted!")
+
 # Change title for updating	
 st.title("Update a Name")
 names = get_all_names()
@@ -80,10 +161,11 @@ if st.button("Update"):
         update_name(selected_id, new_name.strip()) 
         st.success("Updated successfully.")
 
+# OLD UNSORTED RESULTS CODE: 
 # Changes title to show saved names
-st.title("View Saved Names")
-names = get_all_names()
+# st.title("View Saved Names")
+# names = get_all_names()
 # Displays the names in a row with id and name
-st.subheader("Name List")
-for row in names: 
-    st.write(f"{row[0]}. {row[1]}")
+# st.subheader("Name List")
+# for row in names: 
+#     st.write(f"{row[0]}. {row[1]}")
